@@ -18,6 +18,7 @@ import 'layer.dart';
 typedef TemplateFunction = String Function(
     String str, Map<String, String> data);
 typedef ErrorTileCallBack = void Function(Tile tile, dynamic error);
+typedef CoordConverFunction = LatLng Function(LatLng center);
 
 /// Describes the needed properties to create a tile-based layer. A tile is an
 /// image bound to a specific geographical position.
@@ -199,6 +200,8 @@ class TileLayerOptions extends LayerOptions {
 
   final TemplateFunction templateFunction;
 
+  final CoordConverFunction coordConverFunction;
+
   TileLayerOptions({
     Key key,
     this.urlTemplate,
@@ -238,6 +241,7 @@ class TileLayerOptions extends LayerOptions {
     this.errorTileCallback,
     Stream<Null> rebuild,
     this.templateFunction = util.template,
+    this.coordConverFunction,
   })  : updateInterval =
             updateInterval <= 0 ? null : Duration(milliseconds: updateInterval),
         tileFadeInDuration = tileFadeInDuration <= 0
@@ -759,7 +763,12 @@ class _TileLayerState extends State<TileLayer> with TickerProviderStateMixin {
     }
   }
 
-  void _setZoomTransform(Level level, LatLng center, double zoom) {
+  void _setZoomTransform(Level level, LatLng _center, double zoom) {
+    var center = _center;
+    if (options.coordConverFunction != null) {
+      center = options.coordConverFunction(_center);
+    }
+
     var scale = map.getZoomScale(zoom, level.zoom);
     var pixelOrigin = map.getNewPixelOrigin(center, zoom).round();
     if (level.origin == null) {
@@ -840,7 +849,12 @@ class _TileLayerState extends State<TileLayer> with TickerProviderStateMixin {
     }
   }
 
-  Bounds _getTiledPixelBounds(LatLng center) {
+  Bounds _getTiledPixelBounds(LatLng _center) {
+    var center = _center;
+    if (options.coordConverFunction != null) {
+      center = options.coordConverFunction(_center);
+    }
+
     var scale = map.getZoomScale(map.zoom, _tileZoom);
     var pixelCenter = map.project(center, _tileZoom).floor();
     var halfSize = map.size / (scale * 2);
