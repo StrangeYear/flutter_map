@@ -314,6 +314,9 @@ class Proj4Crs extends Crs {
     }
     // Interpolate
     var nextZoom = downZoom + 1;
+    if (nextZoom >= _scales.length) {
+      return double.infinity;
+    }
     var nextScale = _scales[nextZoom];
     if (nextScale == null) {
       return double.infinity;
